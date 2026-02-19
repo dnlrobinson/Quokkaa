@@ -9,9 +9,14 @@ const overlayButton = document.getElementById('overlay-button');
 const overlayPanel = document.getElementById('overlay-panel');
 
 const TOTAL_OBSTACLES = 10;
-const GRAVITY = 0.85;
-const JUMP_VELOCITY = -12.5;
-const BASE_SPEED = 3.3;
+const GRAVITY = 0.7;
+const JUMP_VELOCITY = -13.2;
+const BASE_SPEED = 2.9;
+const TARGET_SIZES = {
+  quokka: 48,
+  cheese: 24,
+  crow: 24,
+};
 
 let groundY = 0;
 let lastTime = 0;
@@ -20,6 +25,36 @@ let effects = [];
 let cleared = 0;
 let mode = 'start';
 let clouds = [];
+
+const assets = {
+  quokka: new Image(),
+  cheese: new Image(),
+  crow: new Image(),
+};
+
+const spriteSizes = {
+  quokka: { w: 42, h: 36 },
+  cheese: { w: 32, h: 24 },
+  crow: { w: 32, h: 24 },
+};
+
+let assetsReady = false;
+let assetsLoaded = 0;
+
+Object.entries({
+  quokka: 'quokka.png',
+  cheese: 'cheese.png',
+  crow: 'crow.png',
+}).forEach(([key, src]) => {
+  assets[key].src = src;
+  assets[key].addEventListener('load', () => {
+    assetsLoaded += 1;
+    if (assetsLoaded === 3) {
+      assetsReady = true;
+      updateSpriteSizes();
+    }
+  });
+});
 
 const quokka = {
   x: 90,
@@ -41,13 +76,39 @@ function resize() {
   obstacles.forEach((obstacle) => {
     obstacle.y = obstacle.type === 'cheese'
       ? groundY - obstacle.h
-      : groundY - obstacle.h - 20;
+      : groundY - obstacle.h - 26;
   });
 }
 
 window.addEventListener('resize', resize);
 resize();
 buildClouds();
+
+function updateSpriteSizes() {
+  Object.keys(assets).forEach((key) => {
+    const image = assets[key];
+    if (!image.naturalWidth || !image.naturalHeight) return;
+    const ratio = image.naturalWidth / image.naturalHeight;
+    const targetH = TARGET_SIZES[key];
+    spriteSizes[key].h = targetH;
+    spriteSizes[key].w = Math.round(targetH * ratio);
+  });
+
+  quokka.w = spriteSizes.quokka.w;
+  quokka.h = spriteSizes.quokka.h;
+  if (mode !== 'running') {
+    quokka.y = groundY - quokka.h;
+  }
+
+  obstacles.forEach((obstacle) => {
+    const sizes = spriteSizes[obstacle.type];
+    obstacle.w = sizes.w;
+    obstacle.h = sizes.h;
+    obstacle.y = obstacle.type === 'cheese'
+      ? groundY - obstacle.h
+      : groundY - obstacle.h - 26;
+  });
+}
 
 function setOverlay({ title, subtitle = '', buttonLabel = '', visible = true, win = false }) {
   overlayTitle.textContent = title;
@@ -92,10 +153,11 @@ function buildObstacles() {
 
   for (let i = 0; i < TOTAL_OBSTACLES; i += 1) {
     const type = types[i];
+    const sizes = spriteSizes[type];
     const obstacle = {
       type,
-      w: type === 'cheese' ? 34 : 36,
-      h: type === 'cheese' ? 28 : 26,
+      w: sizes.w,
+      h: sizes.h,
       x,
       y: 0,
       cleared: false,
@@ -103,9 +165,9 @@ function buildObstacles() {
     };
     obstacle.y = type === 'cheese'
       ? groundY - obstacle.h
-      : groundY - obstacle.h - 20;
+      : groundY - obstacle.h - 26;
     obstacles.push(obstacle);
-    x += 180 + Math.random() * 90;
+    x += 220 + Math.random() * 120;
   }
 }
 
@@ -117,8 +179,8 @@ function startGame() {
 
 function gameOver(reason = 'bonk') {
   const message = reason === 'caught'
-    ? 'Caught by a crow.'
-    : 'The quokka bonked an obstacle.';
+    ? 'Pica by a crow.'
+    : 'Ate too much cheese.';
   mode = 'gameover';
   setOverlay({
     title: 'Game over',
@@ -140,17 +202,18 @@ function winGame() {
 }
 
 function rectsOverlap(a, b) {
+  const pad = b.type === 'crow' ? 6 : 4;
   return (
-    a.x < b.x + b.w &&
-    a.x + a.w > b.x &&
-    a.y < b.y + b.h &&
-    a.y + a.h > b.y
+    a.x < b.x + b.w - pad &&
+    a.x + a.w > b.x + pad &&
+    a.y < b.y + b.h - pad &&
+    a.y + a.h > b.y + pad
   );
 }
 
 function tryDeflect() {
   if (mode !== 'running') return;
-  const range = 70;
+  const range = 90;
   const candidates = obstacles.filter((obstacle) => (
     obstacle.type === 'crow' &&
     !obstacle.cleared &&
@@ -244,33 +307,15 @@ function drawQuokka() {
   const x = quokka.x;
   const y = quokka.y;
 
+  if (assetsReady) {
+    ctx.drawImage(assets.quokka, x, y, quokka.w, quokka.h);
+    return;
+  }
+
   ctx.fillStyle = '#f6f0e2';
   ctx.beginPath();
   ctx.ellipse(x + 20, y + 22, 18, 16, 0, 0, Math.PI * 2);
   ctx.fill();
-
-  ctx.fillStyle = '#e8dbc0';
-  ctx.beginPath();
-  ctx.ellipse(x + 12, y + 10, 6, 8, -0.3, 0, Math.PI * 2);
-  ctx.ellipse(x + 28, y + 8, 6, 8, 0.3, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = '#2d0c1b';
-  ctx.beginPath();
-  ctx.arc(x + 14, y + 20, 2.2, 0, Math.PI * 2);
-  ctx.arc(x + 26, y + 20, 2.2, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.arc(x + 20, y + 27, 2.6, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.strokeStyle = '#2d0c1b';
-  ctx.lineWidth = 1.2;
-  ctx.beginPath();
-  ctx.moveTo(x + 20, y + 28);
-  ctx.lineTo(x + 20, y + 32);
-  ctx.stroke();
 }
 
 function drawGround() {
@@ -308,13 +353,14 @@ function drawObstacles() {
   obstacles.forEach((obstacle) => {
     if (obstacle.remove) return;
 
-    if (obstacle.type === 'cheese') {
-      ctx.font = '24px serif';
-      ctx.fillText('🧀', obstacle.x - 2, obstacle.y + obstacle.h);
-    } else {
-      ctx.font = '24px serif';
-      ctx.fillText('🐦', obstacle.x - 2, obstacle.y + obstacle.h);
+    if (assetsReady) {
+      const image = obstacle.type === 'cheese' ? assets.cheese : assets.crow;
+      ctx.drawImage(image, obstacle.x, obstacle.y, obstacle.w, obstacle.h);
+      return;
     }
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(obstacle.x, obstacle.y, obstacle.w, obstacle.h);
   });
 }
 
