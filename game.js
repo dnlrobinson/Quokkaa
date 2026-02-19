@@ -196,7 +196,7 @@ function gameOver(reason = 'bonk') {
 function winGame() {
   mode = 'win';
   setOverlay({
-    title: 'Feliz Cumpleaños Quokka. I love you',
+    title: 'Feliz Cumpleaños Quokka. I love you so much!',
     subtitle: '',
     buttonLabel: 'Play again',
     visible: true,
