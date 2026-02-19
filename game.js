@@ -13,6 +13,7 @@ const TOTAL_OBSTACLES = 10;
 const GRAVITY = 0.7;
 const JUMP_VELOCITY = -13.2;
 const BASE_SPEED = 2.9;
+const FINISH_SPEED = 2.1;
 const TARGET_SIZES = {
   quokka: 48,
   cheese: 24,
@@ -25,6 +26,14 @@ let obstacles = [];
 let cleared = 0;
 let mode = 'start';
 let clouds = [];
+let finish = {
+  active: false,
+  reached: false,
+  cakeX: 0,
+  cakeY: 0,
+  cakeW: 46,
+  cakeH: 38,
+};
 
 const assets = {
   quokka: new Image(),
@@ -78,6 +87,10 @@ function resize() {
       ? groundY - obstacle.h
       : groundY - obstacle.h - 26;
   });
+  if (finish.active) {
+    finish.cakeY = groundY - finish.cakeH;
+    finish.cakeX = Math.min(canvas.width - finish.cakeW - 24, finish.cakeX);
+  }
 }
 
 window.addEventListener('resize', resize);
@@ -135,6 +148,9 @@ function resetGame() {
   quokka.y = groundY - quokka.h;
   quokka.vy = 0;
   quokka.grounded = true;
+  quokka.x = 90;
+  finish.active = false;
+  finish.reached = false;
   buildObstacles();
   buildClouds();
 }
@@ -176,6 +192,17 @@ function startGame() {
   setControlsActive(true);
   setStartButtonVisible(false);
   resetGame();
+}
+
+function startFinish() {
+  mode = 'finish';
+  finish.active = true;
+  finish.reached = false;
+  finish.cakeW = 46;
+  finish.cakeH = 38;
+  finish.cakeX = Math.min(canvas.width - finish.cakeW - 24, quokka.x + 220);
+  finish.cakeY = groundY - finish.cakeH;
+  obstacles = [];
 }
 
 function gameOver(reason = 'bonk') {
@@ -228,27 +255,39 @@ function update(dt) {
     quokka.grounded = false;
   }
 
-  for (let i = 0; i < obstacles.length; i += 1) {
-    const obstacle = obstacles[i];
-    obstacle.x -= BASE_SPEED * dt;
+  if (mode === 'running') {
+    for (let i = 0; i < obstacles.length; i += 1) {
+      const obstacle = obstacles[i];
+      obstacle.x -= BASE_SPEED * dt;
 
-    if (!obstacle.cleared && rectsOverlap(quokka, obstacle)) {
-      gameOver(obstacle.type === 'crow' ? 'caught' : 'bonk');
-      break;
+      if (!obstacle.cleared && rectsOverlap(quokka, obstacle)) {
+        gameOver(obstacle.type === 'crow' ? 'caught' : 'bonk');
+        break;
+      }
+
+      if (!obstacle.cleared && obstacle.x + obstacle.w < quokka.x - 6) {
+        obstacle.cleared = true;
+        cleared += 1;
+        updateScore();
+        if (cleared >= TOTAL_OBSTACLES) {
+          startFinish();
+          break;
+        }
+      }
     }
 
-    if (!obstacle.cleared && obstacle.x + obstacle.w < quokka.x - 6) {
-      obstacle.cleared = true;
-      cleared += 1;
-      updateScore();
-      if (cleared >= TOTAL_OBSTACLES) {
+    obstacles = obstacles.filter((obstacle) => !obstacle.remove && obstacle.x + obstacle.w > -50);
+  }
+
+  if (mode === 'finish' && finish.active && !finish.reached) {
+    if (quokka.grounded) {
+      quokka.x += FINISH_SPEED * dt;
+      if (quokka.x + quokka.w >= finish.cakeX - 4) {
+        finish.reached = true;
         winGame();
-        break;
       }
     }
   }
-
-  obstacles = obstacles.filter((obstacle) => !obstacle.remove && obstacle.x + obstacle.w > -50);
 
   clouds.forEach((cloud) => {
     cloud.x -= (BASE_SPEED * 0.35 + cloud.speed) * dt;
@@ -305,6 +344,28 @@ function drawGround() {
   }
 }
 
+function drawCake() {
+  if (!finish.active) return;
+  const x = finish.cakeX;
+  const y = finish.cakeY;
+
+  ctx.fillStyle = '#f8e7c8';
+  ctx.fillRect(x, y + 12, finish.cakeW, finish.cakeH - 12);
+
+  ctx.fillStyle = '#f7b6c8';
+  ctx.fillRect(x, y + 6, finish.cakeW, 10);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x + 6, y, finish.cakeW - 12, 8);
+
+  ctx.fillStyle = '#ff6f91';
+  ctx.fillRect(x + finish.cakeW / 2 - 2, y - 8, 4, 10);
+  ctx.fillStyle = '#ffd166';
+  ctx.beginPath();
+  ctx.arc(x + finish.cakeW / 2, y - 10, 4, 0, Math.PI * 2);
+  ctx.fill();
+}
+
 function drawClouds() {
   ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
   clouds.forEach((cloud) => {
@@ -339,6 +400,7 @@ function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawClouds();
   drawGround();
+  drawCake();
   drawObstacles();
   drawQuokka();
 }
@@ -348,7 +410,7 @@ function loop(timestamp) {
   const dt = Math.min(2, (timestamp - lastTime) / 16.67);
   lastTime = timestamp;
 
-  if (mode === 'running') {
+  if (mode === 'running' || mode === 'finish') {
     update(dt);
   }
 
