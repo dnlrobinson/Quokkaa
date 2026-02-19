@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quokka Runner</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main id="game-wrap">
+      <div id="hud">
+        <div id="score">Obstacles cleared: 0/10</div>
+      </div>
+
+      <canvas id="game" width="900" height="320" aria-label="Quokka runner game"></canvas>
+
+      <div id="overlay" class="overlay is-visible" role="dialog" aria-live="polite">
+        <div class="panel" id="overlay-panel">
+          <div id="overlay-title" class="title">Press Space to start</div>
+          <div id="overlay-subtitle" class="subtitle">Space/↑ to jump • D to deflect crows</div>
+          <button id="overlay-button" class="btn is-hidden" type="button">Try again</button>
+        </div>
+      </div>
+    </main>
+
+    <script src="game.js"></script>
+  </body>
+</html>

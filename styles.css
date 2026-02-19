@@ -1,0 +1,125 @@
+:root {
+  --pink: #ffc0cb;
+  --ink: #2d0c1b;
+  --shadow: rgba(45, 12, 27, 0.2);
+  --panel: rgba(255, 255, 255, 0.7);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--pink);
+  font-family: "Trebuchet MS", "Lucida Sans Unicode", sans-serif;
+  color: var(--ink);
+}
+
+#game-wrap {
+  position: relative;
+  width: min(900px, 92vw);
+}
+
+#hud {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  z-index: 2;
+  font-size: 14px;
+  letter-spacing: 0.2px;
+}
+
+#score {
+  background: rgba(255, 255, 255, 0.65);
+  padding: 6px 10px;
+  border-radius: 999px;
+  box-shadow: 0 6px 16px var(--shadow);
+}
+
+#game {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 18px 45px rgba(45, 12, 27, 0.25);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  background: rgba(255, 192, 203, 0.55);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 3;
+}
+
+.overlay.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.panel {
+  background: var(--panel);
+  border-radius: 20px;
+  padding: 24px 28px;
+  box-shadow: 0 15px 30px var(--shadow);
+  max-width: 460px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.subtitle {
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.title.win {
+  font-size: 30px;
+  line-height: 1.2;
+}
+
+.btn {
+  margin-top: 18px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--ink);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 10px 18px var(--shadow);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn.is-hidden {
+  display: none;
+}
+
+@media (max-width: 520px) {
+  .panel {
+    padding: 20px 18px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .title.win {
+    font-size: 24px;
+  }
+}
