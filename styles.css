@@ -117,13 +117,14 @@ body {
 }
 
 .controls {
-  position: absolute;
-  left: 12px;
-  right: 12px;
+  position: fixed;
+  left: 0;
+  right: 0;
   bottom: 12px;
+  padding: 0 12px;
   display: none;
   gap: 12px;
-  z-index: 2;
+  z-index: 4;
 }
 
 .control-btn {
