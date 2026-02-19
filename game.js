@@ -7,6 +7,8 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlaySubtitle = document.getElementById('overlay-subtitle');
 const overlayButton = document.getElementById('overlay-button');
 const overlayPanel = document.getElementById('overlay-panel');
+const jumpBtn = document.getElementById('jump-btn');
+const deflectBtn = document.getElementById('deflect-btn');
 
 const TOTAL_OBSTACLES = 10;
 const GRAVITY = 0.7;
@@ -431,6 +433,26 @@ window.addEventListener('keydown', (event) => {
 overlayButton.addEventListener('click', () => {
   startGame();
 });
+
+function bindControl(button, action) {
+  if (!button) return;
+  button.addEventListener('pointerdown', (event) => {
+    event.preventDefault();
+    action();
+  }, { passive: false });
+  button.addEventListener('click', (event) => {
+    event.preventDefault();
+    action();
+  });
+}
+
+bindControl(jumpBtn, handleJump);
+bindControl(deflectBtn, tryDeflect);
+
+canvas.addEventListener('pointerdown', (event) => {
+  event.preventDefault();
+  handleJump();
+}, { passive: false });
 
 setOverlay({
   title: 'Press Space to start',
