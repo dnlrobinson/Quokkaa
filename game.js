@@ -6,9 +6,8 @@ const overlay = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlaySubtitle = document.getElementById('overlay-subtitle');
 const overlayButton = document.getElementById('overlay-button');
-const overlayPanel = document.getElementById('overlay-panel');
 const jumpBtn = document.getElementById('jump-btn');
-const deflectBtn = document.getElementById('deflect-btn');
+const startBtn = document.getElementById('start-btn');
 
 const TOTAL_OBSTACLES = 10;
 const GRAVITY = 0.7;
@@ -23,7 +22,6 @@ const TARGET_SIZES = {
 let groundY = 0;
 let lastTime = 0;
 let obstacles = [];
-let effects = [];
 let cleared = 0;
 let mode = 'start';
 let clouds = [];
@@ -134,7 +132,6 @@ function updateScore() {
 function resetGame() {
   cleared = 0;
   updateScore();
-  effects = [];
   quokka.y = groundY - quokka.h;
   quokka.vy = 0;
   quokka.grounded = true;
@@ -176,6 +173,8 @@ function buildObstacles() {
 function startGame() {
   mode = 'running';
   setOverlay({ title: '', visible: false });
+  setControlsActive(true);
+  setStartButtonVisible(false);
   resetGame();
 }
 
@@ -190,6 +189,8 @@ function gameOver(reason = 'bonk') {
     buttonLabel: 'Try again',
     visible: true,
   });
+  setControlsActive(false);
+  setStartButtonVisible(false);
 }
 
 function winGame() {
@@ -201,6 +202,8 @@ function winGame() {
     visible: true,
     win: true,
   });
+  setControlsActive(false);
+  setStartButtonVisible(false);
 }
 
 function rectsOverlap(a, b) {
@@ -211,36 +214,6 @@ function rectsOverlap(a, b) {
     a.y < b.y + b.h - pad &&
     a.y + a.h > b.y + pad
   );
-}
-
-function tryDeflect() {
-  if (mode !== 'running') return;
-  const range = 90;
-  const candidates = obstacles.filter((obstacle) => (
-    obstacle.type === 'crow' &&
-    !obstacle.cleared &&
-    obstacle.x < quokka.x + range &&
-    obstacle.x + obstacle.w > quokka.x - 5
-  ));
-
-  if (candidates.length === 0) return;
-
-  candidates.sort((a, b) => Math.abs(a.x - quokka.x) - Math.abs(b.x - quokka.x));
-  const target = candidates[0];
-  target.cleared = true;
-  target.remove = true;
-  cleared += 1;
-  updateScore();
-
-  effects.push({
-    x: target.x + target.w / 2,
-    y: target.y + target.h / 2,
-    ttl: 18,
-  });
-
-  if (cleared >= TOTAL_OBSTACLES) {
-    winGame();
-  }
 }
 
 function update(dt) {
@@ -285,10 +258,6 @@ function update(dt) {
     }
   });
 
-  effects.forEach((effect) => {
-    effect.ttl -= dt * 1.3;
-  });
-  effects = effects.filter((effect) => effect.ttl > 0);
 }
 
 function buildClouds() {
@@ -366,26 +335,12 @@ function drawObstacles() {
   });
 }
 
-function drawEffects() {
-  effects.forEach((effect) => {
-    const alpha = Math.max(0, Math.min(1, effect.ttl / 18));
-    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-    ctx.beginPath();
-    ctx.arc(effect.x, effect.y, 8 * alpha, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = `rgba(255, 214, 0, ${alpha})`;
-    ctx.fillText('✦', effect.x - 4, effect.y + 4);
-  });
-}
-
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawClouds();
   drawGround();
   drawObstacles();
   drawQuokka();
-  drawEffects();
 }
 
 function loop(timestamp) {
@@ -420,10 +375,6 @@ window.addEventListener('keydown', (event) => {
     event.preventDefault();
     handleJump();
   }
-  if (event.code === 'KeyD') {
-    event.preventDefault();
-    tryDeflect();
-  }
 
   if ((mode === 'gameover' || mode === 'win') && event.code === 'Space') {
     startGame();
@@ -447,16 +398,34 @@ function bindControl(button, action) {
 }
 
 bindControl(jumpBtn, handleJump);
-bindControl(deflectBtn, tryDeflect);
 
 canvas.addEventListener('pointerdown', (event) => {
   event.preventDefault();
   handleJump();
 }, { passive: false });
 
+function setControlsActive(active) {
+  if (!jumpBtn) return;
+  const controls = document.getElementById('mobile-controls');
+  if (!controls) return;
+  controls.classList.toggle('is-active', active);
+}
+
+function setStartButtonVisible(visible) {
+  if (!startBtn) return;
+  startBtn.classList.toggle('is-hidden', !visible);
+}
+
+startBtn.addEventListener('click', () => {
+  startGame();
+});
+
 setOverlay({
-  title: 'Press Space to start',
-  subtitle: 'Space/↑ to jump • D to deflect crows',
+  title: 'Press Jump for Picas to start',
+  subtitle: 'Space/↑ or Jump button to hop',
   buttonLabel: '',
   visible: true,
 });
+
+setControlsActive(false);
+setStartButtonVisible(true);
