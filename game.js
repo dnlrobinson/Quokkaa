@@ -51,6 +51,7 @@ const spriteSizes = {
 
 let assetsReady = false;
 let assetsLoaded = 0;
+let audioCtx = null;
 
 Object.entries({
   quokka: 'quokka.png',
@@ -125,6 +126,56 @@ function updateSpriteSizes() {
   });
 }
 
+function ensureAudio() {
+  if (!audioCtx) {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return null;
+    audioCtx = new AudioContext();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+function playTone({ frequency, duration = 0.14, type = 'sine', gain = 0.06, ramp = null, timeOffset = 0 }) {
+  const ctx = ensureAudio();
+  if (!ctx) return;
+  const now = ctx.currentTime + timeOffset;
+  const osc = ctx.createOscillator();
+  const amp = ctx.createGain();
+
+  osc.type = type;
+  osc.frequency.setValueAtTime(frequency, now);
+  if (ramp) {
+    osc.frequency.exponentialRampToValueAtTime(ramp, now + duration);
+  }
+
+  amp.gain.setValueAtTime(0.0001, now);
+  amp.gain.exponentialRampToValueAtTime(gain, now + 0.02);
+  amp.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+  osc.connect(amp);
+  amp.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + duration + 0.02);
+}
+
+function playJumpSound() {
+  playTone({ frequency: 520, ramp: 760, duration: 0.14, type: 'triangle', gain: 0.05 });
+}
+
+function playGameOverSound() {
+  playTone({ frequency: 260, ramp: 140, duration: 0.28, type: 'sawtooth', gain: 0.04 });
+  playTone({ frequency: 180, ramp: 120, duration: 0.22, type: 'sawtooth', gain: 0.03, timeOffset: 0.12 });
+}
+
+function playWinSound() {
+  playTone({ frequency: 523, duration: 0.18, type: 'sine', gain: 0.05 });
+  playTone({ frequency: 659, duration: 0.18, type: 'sine', gain: 0.05, timeOffset: 0.12 });
+  playTone({ frequency: 784, duration: 0.2, type: 'sine', gain: 0.05, timeOffset: 0.24 });
+}
+
 function setOverlay({ title, subtitle = '', buttonLabel = '', visible = true, win = false }) {
   overlayTitle.textContent = title;
   overlayTitle.classList.toggle('win', win);
@@ -197,6 +248,7 @@ function startGame() {
   setOverlay({ title: '', visible: false });
   setControlsActive(true);
   setStartButtonVisible(false);
+  ensureAudio();
   resetGame();
 }
 
@@ -216,6 +268,7 @@ function gameOver(reason = 'bonk') {
     ? 'Pica by a crow.'
     : 'Ate too much cheese.';
   mode = 'gameover';
+  playGameOverSound();
   setOverlay({
     title: 'Oh no! Game over',
     subtitle: message,
@@ -228,6 +281,7 @@ function gameOver(reason = 'bonk') {
 
 function winGame() {
   mode = 'win';
+  playWinSound();
   spawnConfetti();
   setOverlay({
     title: 'Feliz Cumpleaños Quokka.\nI love you so much!',
@@ -481,6 +535,7 @@ function handleJump() {
   if (quokka.grounded) {
     quokka.vy = JUMP_VELOCITY;
     quokka.grounded = false;
+    playJumpSound();
   }
 }
 
