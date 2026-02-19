@@ -211,7 +211,7 @@ function gameOver(reason = 'bonk') {
     : 'Ate too much cheese.';
   mode = 'gameover';
   setOverlay({
-    title: 'Game over',
+    title: 'Oh no! Game over',
     subtitle: message,
     buttonLabel: 'Try again',
     visible: true,

@@ -76,9 +76,9 @@ body {
 .panel {
   background: var(--panel);
   border-radius: 20px;
-  padding: 24px 28px;
+  padding: 32px 36px;
   box-shadow: 0 15px 30px var(--shadow);
-  max-width: 460px;
+  max-width: 520px;
 }
 
 .title {
