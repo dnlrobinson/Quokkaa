@@ -144,7 +144,7 @@ function setOverlay({ title, subtitle = '', buttonLabel = '', visible = true, wi
 }
 
 function updateScore() {
-  scoreEl.textContent = `Obstacles cleared: ${cleared}/${TOTAL_OBSTACLES}`;
+  scoreEl.textContent = `${cleared}/${TOTAL_OBSTACLES}`;
 }
 
 function resetGame() {
@@ -309,7 +309,7 @@ function update(dt) {
 function spawnConfetti() {
   confetti = [];
   const colors = ['#ff6f91', '#ffd166', '#8be9c9', '#7aa2ff', '#f7b6c8'];
-  const count = 120;
+  const count = 150;
   for (let i = 0; i < count; i += 1) {
     confetti.push({
       x: canvas.width * 0.2 + Math.random() * canvas.width * 0.6,
@@ -320,7 +320,7 @@ function spawnConfetti() {
       rotation: Math.random() * Math.PI,
       vr: -0.15 + Math.random() * 0.3,
       color: colors[i % colors.length],
-      ttl: 140 + Math.random() * 40,
+      ttl: 260 + Math.random() * 60,
     });
   }
 }
@@ -333,7 +333,7 @@ function updateConfetti(dt) {
     piece.x += piece.vx * dt;
     piece.y += piece.vy * dt;
     piece.rotation += piece.vr * dt;
-    piece.ttl -= dt * 1.2;
+    piece.ttl -= dt * 0.7;
   });
   confetti = confetti.filter((piece) => piece.ttl > 0 && piece.y < canvas.height + 40);
 }
