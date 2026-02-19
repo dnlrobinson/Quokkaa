@@ -81,9 +81,15 @@ body {
   max-width: 520px;
 }
 
+.panel.win {
+  padding: 24px 28px;
+  max-width: 440px;
+}
+
 .title {
   font-size: 24px;
   font-weight: 700;
+  white-space: pre-line;
 }
 
 .subtitle {

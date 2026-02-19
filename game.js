@@ -6,6 +6,7 @@ const overlay = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlaySubtitle = document.getElementById('overlay-subtitle');
 const overlayButton = document.getElementById('overlay-button');
+const overlayPanel = document.getElementById('overlay-panel');
 const jumpBtn = document.getElementById('jump-btn');
 const startBtn = document.getElementById('start-btn');
 
@@ -26,6 +27,7 @@ let obstacles = [];
 let cleared = 0;
 let mode = 'start';
 let clouds = [];
+let confetti = [];
 let finish = {
   active: false,
   reached: false,
@@ -127,6 +129,9 @@ function setOverlay({ title, subtitle = '', buttonLabel = '', visible = true, wi
   overlayTitle.textContent = title;
   overlayTitle.classList.toggle('win', win);
   overlaySubtitle.textContent = subtitle;
+  if (overlayPanel) {
+    overlayPanel.classList.toggle('win', win);
+  }
 
   if (buttonLabel) {
     overlayButton.textContent = buttonLabel;
@@ -149,6 +154,7 @@ function resetGame() {
   quokka.vy = 0;
   quokka.grounded = true;
   quokka.x = 90;
+  confetti = [];
   finish.active = false;
   finish.reached = false;
   buildObstacles();
@@ -222,8 +228,9 @@ function gameOver(reason = 'bonk') {
 
 function winGame() {
   mode = 'win';
+  spawnConfetti();
   setOverlay({
-    title: 'Feliz Cumpleaños Quokka. I love you so much!',
+    title: 'Feliz Cumpleaños Quokka.\nI love you so much!',
     subtitle: '',
     buttonLabel: 'Play again',
     visible: true,
@@ -299,6 +306,38 @@ function update(dt) {
 
 }
 
+function spawnConfetti() {
+  confetti = [];
+  const colors = ['#ff6f91', '#ffd166', '#8be9c9', '#7aa2ff', '#f7b6c8'];
+  const count = 120;
+  for (let i = 0; i < count; i += 1) {
+    confetti.push({
+      x: canvas.width * 0.2 + Math.random() * canvas.width * 0.6,
+      y: -20 - Math.random() * 60,
+      vx: -1.5 + Math.random() * 3,
+      vy: 2 + Math.random() * 3,
+      size: 4 + Math.random() * 4,
+      rotation: Math.random() * Math.PI,
+      vr: -0.15 + Math.random() * 0.3,
+      color: colors[i % colors.length],
+      ttl: 140 + Math.random() * 40,
+    });
+  }
+}
+
+function updateConfetti(dt) {
+  if (confetti.length === 0) return;
+  const gravity = 0.08;
+  confetti.forEach((piece) => {
+    piece.vy += gravity * dt;
+    piece.x += piece.vx * dt;
+    piece.y += piece.vy * dt;
+    piece.rotation += piece.vr * dt;
+    piece.ttl -= dt * 1.2;
+  });
+  confetti = confetti.filter((piece) => piece.ttl > 0 && piece.y < canvas.height + 40);
+}
+
 function buildClouds() {
   clouds = [];
   const count = 5;
@@ -366,6 +405,18 @@ function drawCake() {
   ctx.fill();
 }
 
+function drawConfetti() {
+  if (confetti.length === 0) return;
+  confetti.forEach((piece) => {
+    ctx.save();
+    ctx.translate(piece.x, piece.y);
+    ctx.rotate(piece.rotation);
+    ctx.fillStyle = piece.color;
+    ctx.fillRect(-piece.size / 2, -piece.size / 2, piece.size, piece.size);
+    ctx.restore();
+  });
+}
+
 function drawClouds() {
   ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
   clouds.forEach((cloud) => {
@@ -403,6 +454,7 @@ function render() {
   drawCake();
   drawObstacles();
   drawQuokka();
+  drawConfetti();
 }
 
 function loop(timestamp) {
@@ -413,6 +465,7 @@ function loop(timestamp) {
   if (mode === 'running' || mode === 'finish') {
     update(dt);
   }
+  updateConfetti(dt);
 
   render();
   requestAnimationFrame(loop);
