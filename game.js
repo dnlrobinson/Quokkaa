@@ -176,12 +176,20 @@ function playWinSound() {
   playTone({ frequency: 784, duration: 0.2, type: 'sine', gain: 0.05, timeOffset: 0.24 });
 }
 
-function setOverlay({ title, subtitle = '', buttonLabel = '', visible = true, win = false }) {
+function setOverlay({
+  title,
+  subtitle = '',
+  buttonLabel = '',
+  visible = true,
+  win = false,
+  panelVisible = true,
+}) {
   overlayTitle.textContent = title;
   overlayTitle.classList.toggle('win', win);
   overlaySubtitle.textContent = subtitle;
   if (overlayPanel) {
     overlayPanel.classList.toggle('win', win);
+    overlayPanel.classList.toggle('is-hidden', !panelVisible);
   }
 
   if (buttonLabel) {
@@ -245,7 +253,7 @@ function buildObstacles() {
 
 function startGame() {
   mode = 'running';
-  setOverlay({ title: '', visible: false });
+  setOverlay({ title: '', visible: false, panelVisible: false });
   setControlsActive(true);
   setStartButtonVisible(false);
   ensureAudio();
@@ -274,6 +282,7 @@ function gameOver(reason = 'bonk') {
     subtitle: message,
     buttonLabel: 'Try again',
     visible: true,
+    panelVisible: true,
   });
   setControlsActive(false);
   setStartButtonVisible(false);
@@ -289,6 +298,7 @@ function winGame() {
     buttonLabel: 'Play again',
     visible: true,
     win: true,
+    panelVisible: true,
   });
   setControlsActive(false);
   setStartButtonVisible(false);
@@ -591,10 +601,11 @@ startBtn.addEventListener('click', () => {
 });
 
 setOverlay({
-  title: 'Press Jump for Picas to start',
-  subtitle: 'Space/↑ or Jump button to hop',
+  title: '',
+  subtitle: '',
   buttonLabel: '',
   visible: true,
+  panelVisible: false,
 });
 
 setControlsActive(false);

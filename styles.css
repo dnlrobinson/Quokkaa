@@ -81,6 +81,10 @@ body {
   max-width: 520px;
 }
 
+.panel.is-hidden {
+  display: none;
+}
+
 .panel.win {
   padding: 24px 28px;
   max-width: 440px;
